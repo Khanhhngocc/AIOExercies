@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Virtual environment
+.venv/
+venv/
+
+# IDE
+.idea/
+.vscode/
+
+# macOS
+.DS_Store
+
+# Dataset
+data/raw/*.csv
+
+# Trained models
+models/*.pt
+models/*.pkl
+
+# Results
+results/*.csv
+
+# Test cache
+.pytest_cache/
