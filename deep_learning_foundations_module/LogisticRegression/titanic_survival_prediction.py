@@ -1,182 +1,339 @@
+# =========================================================
+# 1. IMPORT LIBRARIES
+# =========================================================
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
+# Split data into training, validation, and testing sets.
 from sklearn.model_selection import train_test_split
+
+# Standardize numerical input features.
 from sklearn.preprocessing import StandardScaler
 
-# ---------------------------
-# 26.4
-# ---------------------------
-dataset_path =  "titanic_modified_dataset.csv"
+
+# =========================================================
+# 2. LOAD AND PREPARE THE TITANIC DATASET
+# =========================================================
+dataset_path = "titanic_modified_dataset.csv"
+
+# Load the dataset and use PassengerId as the DataFrame index.
 df = pd.read_csv(
     dataset_path,
-    index_col='PassengerId'
+    index_col="PassengerId",
 )
 
+# Convert the DataFrame into a numerical NumPy array.
 dataset_arr = df.to_numpy().astype(np.float64)
-X, y = dataset_arr[:, :-1], dataset_arr[:, -1]
-print(X.shape)
 
-intercept = np.ones((
-    X.shape[0], 1)
+# Use all columns except the last as input features.
+# Use the last column as the binary target label.
+X = dataset_arr[:, :-1]
+y = dataset_arr[:, -1]
+
+print(f"Feature shape before adding bias: {X.shape}")
+
+# Add a bias column of ones as the first feature column.
+intercept = np.ones(
+    (X.shape[0], 1)
 )
-X_b = np.concatenate((intercept, X), axis=1)
-print(X_b.shape)
 
-# ---------------------------
-# 26.4
-# ---------------------------
+X_b = np.concatenate(
+    (intercept, X),
+    axis=1,
+)
+
+print(f"Feature shape after adding bias: {X_b.shape}")
+
+
+# =========================================================
+# 3. SPLIT DATA INTO TRAINING, VALIDATION, AND TEST SETS
+# =========================================================
+# Final split ratio:
+# - Training: 70%
+# - Validation: 20%
+# - Testing: 10%
 val_size = 0.2
 test_size = 0.125
 random_state = 2
 is_shuffle = True
 
-X_train, X_val, y_train, y_val = train_test_split(X_b, y, test_size=val_size,
-                                                  random_state=random_state,
-                                                  shuffle=is_shuffle)
+# Create the validation set first.
+X_train, X_val, y_train, y_val = train_test_split(
+    X_b,
+    y,
+    test_size=val_size,
+    random_state=random_state,
+    shuffle=is_shuffle,
+    stratify=y,
+)
 
-X_train, X_test, y_train, y_test = train_test_split(X_train, y_train,
-                                                    test_size=test_size,
-                                                    random_state=random_state,
-                                                    shuffle=is_shuffle)
+# Create the test set from the remaining training pool.
+X_train, X_test, y_train, y_test = train_test_split(
+    X_train,
+    y_train,
+    test_size=test_size,
+    random_state=random_state,
+    shuffle=is_shuffle,
+    stratify=y_train,
+)
 
-print(f'Number of training samples: {X_train.shape[0]}')
-print(f'Number of val samples: {X_val.shape[0]}')
-print(f'Number of test samples: {X_test.shape[0]}')
+print(f"Number of training samples: {X_train.shape[0]}")
+print(f"Number of validation samples: {X_val.shape[0]}")
+print(f"Number of test samples: {X_test.shape[0]}")
 
-# ---------------------------
-# 26.4
-# ---------------------------
+
+# =========================================================
+# 4. STANDARDIZE INPUT FEATURES
+# =========================================================
+# Keep the first bias column unchanged.
+# Standardize only the original feature columns.
 normalizer = StandardScaler()
-X_train[:, 1:] = normalizer.fit_transform(X_train[:, 1:])
-X_val[:, 1:] = normalizer.transform(X_val[:, 1:])
-X_test[:, 1:] = normalizer.transform(X_test[:, 1:])
 
-# ---------------------------
-# 26.4
-# ---------------------------
-# 1. Sigmoid
+# Fit the scaler on training data only.
+X_train[:, 1:] = normalizer.fit_transform(
+    X_train[:, 1:]
+)
+
+# Transform validation and test data using training statistics.
+X_val[:, 1:] = normalizer.transform(
+    X_val[:, 1:]
+)
+
+X_test[:, 1:] = normalizer.transform(
+    X_test[:, 1:]
+)
+
+
+# =========================================================
+# 5. LOGISTIC REGRESSION FUNCTIONS
+# =========================================================
 def sigmoid(z):
+    """
+    Convert linear logits into probabilities between 0 and 1.
+
+    Formula:
+    sigmoid(z) = 1 / (1 + exp(-z))
+    """
+    # Prevent numerical overflow for extremely large values.
+    z = np.clip(z, -500, 500)
+
     return 1 / (1 + np.exp(-z))
 
-# 2. Hypothesis function
+
 def predict(X, theta):
-    dot_product = X.dot(theta) #(m, 1)
-    y_hat = sigmoid(dot_product)
+    """
+    Calculate survival probabilities.
 
-    return y_hat
+    Formula:
+    y_hat = sigmoid(X @ theta)
+    """
+    logits = X.dot(theta)
 
-# 3. Binary Cross-entropy loss function
-def compute_loss(y_hat, y):
-    y_hat = np.clip(y_hat, 1e-7, 1 - 1e-7)
+    return sigmoid(logits)
 
-    return np.mean(-y * np.log(y_hat) - (1-y) * np.log(1-y_hat))
 
-# 4. Gradient function¶
-def compute_gradient(X, y, y_hat):
-    return np.dot(X.T, (y_hat-y)) / y.size
+def compute_loss(y_hat, y_true):
+    """
+    Calculate Binary Cross-Entropy loss.
 
-# 5.  Update weights function
-def update_theta(theta, gradient, lr):
-    return theta - lr * gradient
+    Formula:
+    -mean(y*log(y_hat) + (1-y)*log(1-y_hat))
+    """
+    # Avoid log(0), which is undefined.
+    y_hat = np.clip(
+        y_hat,
+        1e-7,
+        1 - 1e-7,
+    )
 
-# 6. Accuracy function
-def compute_accuracy(X, y, theta):
-    y_hat = predict(X, theta).round()
-    acc = (y_hat == y).mean()
+    return np.mean(
+        -y_true * np.log(y_hat)
+        - (1 - y_true) * np.log(1 - y_hat)
+    )
 
-    return acc
 
-# ---------------------------
-# 26.4
-# ---------------------------
-lr = 0.01
+def compute_gradient(X, y_true, y_hat):
+    """
+    Calculate the gradient of Binary Cross-Entropy loss
+    with respect to theta.
+    """
+    return X.T.dot(y_hat - y_true) / y_true.size
+
+
+def update_theta(theta, gradient, learning_rate):
+    """Update model parameters using gradient descent."""
+    return theta - learning_rate * gradient
+
+
+def compute_accuracy(X, y_true, theta):
+    """
+    Calculate classification accuracy.
+
+    A probability greater than or equal to 0.5 is classified as 1.
+    """
+    probabilities = predict(X, theta)
+
+    # Convert predicted probabilities into binary labels.
+    y_pred = (probabilities >= 0.5).astype(int)
+
+    return (y_pred == y_true).mean()
+
+
+# =========================================================
+# 6. TRAIN LOGISTIC REGRESSION WITH MINI-BATCH GRADIENT DESCENT
+# =========================================================
+learning_rate = 0.01
 epochs = 100
 batch_size = 16
 
+# Initialize parameters with small random values.
 np.random.seed(random_state)
+
 theta = np.random.uniform(
-    size=X_train.shape[1]
+    low=-0.01,
+    high=0.01,
+    size=X_train.shape[1],
 )
 
+# Store metrics after each epoch.
 train_accs = []
 train_losses = []
 val_accs = []
 val_losses = []
 
+num_train_samples = X_train.shape[0]
+
 for epoch in range(epochs):
-    train_batch_losses = []
-    train_batch_accs = []
-    val_batch_losses = []
-    val_batch_accs = []
+    # Shuffle training data at the beginning of each epoch.
+    indices = np.arange(num_train_samples)
+    np.random.shuffle(indices)
 
-    for i in range(0, X_train.shape[0], batch_size):
-        X_i = X_train[i:i+batch_size]
-        y_i = y_train[i:i+batch_size]
+    X_train_shuffled = X_train[indices]
+    y_train_shuffled = y_train[indices]
 
-        y_hat = predict(X_i, theta)
+    # Update parameters using one mini-batch at a time.
+    for start_index in range(0, num_train_samples, batch_size):
+        end_index = start_index + batch_size
 
-        train_loss = compute_loss(y_hat, y_i)
+        X_batch = X_train_shuffled[start_index:end_index]
+        y_batch = y_train_shuffled[start_index:end_index]
 
-        gradient = compute_gradient(X_i, y_i, y_hat)
+        # Calculate batch predictions.
+        y_hat_batch = predict(X_batch, theta)
 
-        theta = update_theta(theta, gradient, lr)
+        # Calculate gradients and update parameters.
+        gradient = compute_gradient(
+            X_batch,
+            y_batch,
+            y_hat_batch,
+        )
 
-        train_batch_losses.append(train_loss)
+        theta = update_theta(
+            theta,
+            gradient,
+            learning_rate,
+        )
 
-        train_acc = compute_accuracy(X_train, y_train, theta)
-        train_batch_accs.append(train_acc)
+    # Calculate training metrics after all mini-batches are completed.
+    train_y_hat = predict(X_train, theta)
 
-        y_val_hat = predict(X_val, theta)
-        val_loss = compute_loss(y_val_hat, y_val)
-        val_batch_losses.append(val_loss)
+    train_loss = compute_loss(
+        train_y_hat,
+        y_train,
+    )
 
-        val_acc = compute_accuracy(X_val, y_val, theta)
-        val_batch_accs.append(val_acc)
+    train_acc = compute_accuracy(
+        X_train,
+        y_train,
+        theta,
+    )
 
-    train_batch_loss = sum(train_batch_losses) / len(train_batch_losses)
-    val_batch_loss = sum(val_batch_losses) / len(val_batch_losses)
-    train_batch_acc = sum(train_batch_accs) / len(train_batch_accs)
-    val_batch_acc = sum(val_batch_accs) / len(val_batch_accs)
+    # Calculate validation metrics after the current epoch.
+    val_y_hat = predict(X_val, theta)
 
-    train_losses.append(train_batch_loss)
-    val_losses.append(val_batch_loss)
-    train_accs.append(train_batch_acc)
-    val_accs.append(val_batch_acc)
+    val_loss = compute_loss(
+        val_y_hat,
+        y_val,
+    )
 
-    print(f'\nEPOCH {epoch + 1}:\tTraining loss: {train_batch_loss:.3f}\tValidation loss: {val_batch_loss:.3f}')
+    val_acc = compute_accuracy(
+        X_val,
+        y_val,
+        theta,
+    )
 
-# ---------------------------
-# 26.4
-# ---------------------------
-fig, ax = plt.subplots(2, 2, figsize=(12, 10))
-ax[0, 0].plot(train_losses)
-ax[0, 0].set(xlabel='Epoch', ylabel='Loss')
-ax[0, 0].set_title('Training Loss')
+    # Save epoch metrics.
+    train_losses.append(train_loss)
+    val_losses.append(val_loss)
+    train_accs.append(train_acc)
+    val_accs.append(val_acc)
 
-ax[0, 1].plot(val_losses, 'orange')
-ax[0, 1].set(xlabel='Epoch', ylabel='Loss')
-ax[0, 1].set_title('Validation Loss')
+    print(
+        f"Epoch {epoch + 1:03d}/{epochs} | "
+        f"Training Loss: {train_loss:.4f} | "
+        f"Validation Loss: {val_loss:.4f} | "
+        f"Training Accuracy: {train_acc:.4f} | "
+        f"Validation Accuracy: {val_acc:.4f}"
+    )
 
-ax[1, 0].plot(train_accs)
-ax[1, 0].set(xlabel='Epoch', ylabel='Accuracy')
-ax[1, 0].set_title('Training Accuracy')
 
-ax[1, 1].plot(val_accs, 'orange')
-ax[1, 1].set(xlabel='Epoch', ylabel='Accuracy')
-ax[1, 1].set_title('Validation Accuracy')
+# =========================================================
+# 7. VISUALIZE TRAINING HISTORY
+# =========================================================
+fig, axes = plt.subplots(
+    2,
+    2,
+    figsize=(12, 10),
+)
 
+axes[0, 0].plot(train_losses)
+axes[0, 0].set_title("Training Loss")
+axes[0, 0].set_xlabel("Epoch")
+axes[0, 0].set_ylabel("Loss")
+axes[0, 0].grid(alpha=0.3)
+
+axes[0, 1].plot(val_losses, color="orange")
+axes[0, 1].set_title("Validation Loss")
+axes[0, 1].set_xlabel("Epoch")
+axes[0, 1].set_ylabel("Loss")
+axes[0, 1].grid(alpha=0.3)
+
+axes[1, 0].plot(train_accs)
+axes[1, 0].set_title("Training Accuracy")
+axes[1, 0].set_xlabel("Epoch")
+axes[1, 0].set_ylabel("Accuracy")
+axes[1, 0].grid(alpha=0.3)
+
+axes[1, 1].plot(val_accs, color="orange")
+axes[1, 1].set_title("Validation Accuracy")
+axes[1, 1].set_xlabel("Epoch")
+axes[1, 1].set_ylabel("Accuracy")
+axes[1, 1].grid(alpha=0.3)
+
+plt.tight_layout()
 plt.show()
 
-# ---------------------------
-# 26.4
-# ---------------------------
-# Val set
-val_set_acc = compute_accuracy(X_val, y_val, theta)
-print('Evaluation on validation set:')
-print(f'Accuracy: {val_set_acc}')
-# Test set
-test_set_acc = compute_accuracy(X_test, y_test, theta)
-print('Evaluation on test set:')
-print(f'Accuracy: {test_set_acc}')
+
+# =========================================================
+# 8. FINAL EVALUATION
+# =========================================================
+# Evaluate performance on the validation set.
+val_set_acc = compute_accuracy(
+    X_val,
+    y_val,
+    theta,
+)
+
+print("\nEvaluation on Validation Set:")
+print(f"Accuracy: {val_set_acc:.4f}")
+
+# Evaluate the final model on the unseen test set.
+test_set_acc = compute_accuracy(
+    X_test,
+    y_test,
+    theta,
+)
+
+print("\nEvaluation on Test Set:")
+print(f"Accuracy: {test_set_acc:.4f}")

@@ -1,0 +1,22 @@
+# Dữ liệu
+data/
+datasets/
+uploads/
+outputs/
+
+# Môi trường Python
+.venv/
+venv/
+
+# Cache Python
+__pycache__/
+*.pyc
+
+# PyCharm
+.idea/
+
+# Notebook checkpoint
+.ipynb_checkpoints/
+
+# File hệ thống
+.DS_Store
