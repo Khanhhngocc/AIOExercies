@@ -1,0 +1,11 @@
+{
+    "model_name": "distilbert-base-uncased",
+    "dataset": "rotten_tomatoes",
+    "learning_rate": 2e-05,
+    "train_batch_size": 16,
+    "eval_batch_size": 16,
+    "num_train_epochs": 3,
+    "weight_decay": 0.01,
+    "max_length": 128,
+    "seed": 59
+}

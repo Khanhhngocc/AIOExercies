@@ -1,0 +1,21 @@
+text,true_label,predicted_label,confidence,correct
+"lovingly photographed in the manner of a golden book sprung to life , stuart little 2 manages sweetness largely without stickiness .",pos,pos,0.9881442785263062,True
+consistently clever and suspenseful .,pos,pos,0.9939034581184387,True
+"it's like a "" big chill "" reunion of the baader-meinhof gang , only these guys are more harmless pranksters than political activists .",pos,neg,0.9462634921073914,False
+"the story gives ample opportunity for large-scale action and suspense , which director shekhar kapur supplies with tremendous skill .",pos,pos,0.9926159381866455,True
+"red dragon "" never cuts corners .",pos,neg,0.8238632678985596,False
+fresnadillo has something serious to say about the ways in which extravagant chance can distort our perspective and throw us off the path of good sense .,pos,pos,0.882159948348999,True
+throws in enough clever and unexpected twists to make the formula feel fresh .,pos,pos,0.992057740688324,True
+weighty and ponderous but every bit as filling as the treat of the title .,pos,neg,0.8787550330162048,False
+"a real audience-pleaser that will strike a chord with anyone who's ever waited in a doctor's office , emergency room , hospital bed or insurance company office .",pos,pos,0.9930444359779358,True
+generates an enormous feeling of empathy for its characters .,pos,pos,0.99505215883255,True
+exposing the ways we fool ourselves is one hour photo's real strength .,pos,pos,0.9946085214614868,True
+"it's up to you to decide whether to admire these people's dedication to their cause or be repelled by their dogmatism , manipulativeness and narrow , fearful view of american life .",pos,pos,0.9384579062461853,True
+"mostly , [goldbacher] just lets her complicated characters be unruly , confusing and , through it all , human .",pos,neg,0.9639866352081299,False
+. . . quite good at providing some good old fashioned spooks .,pos,pos,0.9703487753868103,True
+"at its worst , the movie is pretty diverting ; the pity is that it rarely achieves its best .",pos,neg,0.9793206453323364,False
+scherfig's light-hearted profile of emotional desperation is achingly honest and delightfully cheeky .,pos,pos,0.9947051405906677,True
+"a journey spanning nearly three decades of bittersweet camaraderie and history , in which we feel that we truly know what makes holly and marina tick , and our hearts go out to them as both continue to negotiate their imperfect , love-hate relationship .",pos,pos,0.993202269077301,True
+"the wonderfully lush morvern callar is pure punk existentialism , and ms . ramsay and her co-writer , liana dognini , have dramatized the alan warner novel , which itself felt like an answer to irvine welsh's book trainspotting .",pos,pos,0.6041406989097595,True
+"as it turns out , you can go home again .",pos,neg,0.648637056350708,False
+"you've already seen city by the sea under a variety of titles , but it's worth yet another visit .",pos,pos,0.9877903461456299,True

@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.DS_Store
+
+# Model checkpoints
+distilbert_sentiment_model/
+distilbert_sentiment_best/
+
+# Experiment logs
+runs/
+wandb/

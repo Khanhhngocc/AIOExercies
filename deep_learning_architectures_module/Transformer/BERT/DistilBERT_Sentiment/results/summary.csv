@@ -1,0 +1,2 @@
+run,model,learning_rate,epochs,train_batch_size,train_loss,best_validation_accuracy,test_loss,test_accuracy
+run_01,distilbert-base-uncased,2e-05,3,16,0.2722012054049567,0.8564727954971857,0.4646816551685333,0.8480300187617261
